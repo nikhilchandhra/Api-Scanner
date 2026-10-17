@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Detail — {{ api.method_name }}</title>
+<style>
+  :root {
+    --bg:#0f1117; --card:#1e2130; --border:#2a2f45; --text:#e6e8ef; --muted:#8a90a6;
+    --accent1:#6366f1; --accent2:#8b5cf6; --danger:#ef4444; --amber:#fbbf24;
+    --green:#22c55e; --orange:#f59e0b;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  .topbar { position:sticky; top:0; z-index:50; background:#141622; border-bottom:1px solid var(--border); }
+  .topbar-row { display:flex; align-items:center; gap:10px; padding:10px 18px; flex-wrap:wrap; }
+  .topbar-row.row2 { border-top:1px solid var(--border); gap:8px; }
+  .brand { font-size:18px; font-weight:700; flex:1; display:flex; align-items:center; gap:8px;
+    background:linear-gradient(90deg,var(--accent1),var(--accent2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  input[type="text"] { background:#14161f; color:var(--text); border:1px solid var(--border); border-radius:7px; padding:8px 10px; font-size:13px; outline:none; }
+  input:focus { border-color:var(--accent1); }
+  .btn { border:none; border-radius:7px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }
+  .btn-primary { background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#fff; }
+  .btn-secondary { background:#262a3d; color:var(--text); border:1px solid var(--border); }
+  .btn-danger { background:#2a1414; color:#ffb4b4; border:1px solid var(--danger); }
+  .mini-spin { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:5px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .env-item { display:flex; align-items:center; gap:6px; background:#14161f; border:1px solid var(--border); border-radius:7px; padding:5px 8px; }
+  .env-badge { font-size:11px; font-weight:700; color:var(--accent2); padding:2px 7px; background:#20233a; border-radius:5px; }
+  .env-item input { width:220px; }
+  .env-remove { background:none; border:none; color:var(--muted); cursor:pointer; }
+  .env-remove:hover { color:var(--danger); }
+  .add-env-form { display:none; align-items:center; gap:6px; background:#14161f; border:1px solid var(--accent1); border-radius:7px; padding:5px 8px; }
+
+  .stats-bar { display:flex; gap:16px; padding:14px 20px; border-bottom:1px solid var(--border); align-items:center; }
+  .method-badge { font-size:12px; font-weight:700; padding:5px 11px; border-radius:6px; }
+  .m-GET { background:#0d3321; color:#4ade80; }
+  .m-POST { background:#1e2f4a; color:#60a5fa; }
+  .m-PUT { background:#3a2a1e; color:#fbbf24; }
+  .m-DELETE { background:#3a1e1e; color:#f87171; }
+  .m-PATCH { background:#2d1e4a; color:#c4b5fd; }
+  .stat-path { font-family:"Consolas",monospace; font-size:15px; }
+  .stat-path .pv { color:var(--amber); }
+  .stat-mname { color:var(--muted); font-size:13px; }
+
+  .content { max-width:900px; margin:0 auto; padding:24px 20px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:22px; }
+  .field-group { margin-bottom:18px; }
+  .field-group > label { display:block; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:7px; }
+  .url-row { display:flex; gap:8px; }
+  .env-select { background:#14161f; color:var(--text); border:1px solid var(--border); border-radius:7px; padding:8px; font-size:13px; }
+  .url-field { flex:1; }
+  table.params { width:100%; border-collapse:collapse; font-size:13px; }
+  table.params th { text-align:left; color:var(--muted); font-weight:600; font-size:11px; padding:5px 8px; border-bottom:1px solid var(--border); }
+  table.params td { padding:5px 8px; }
+  table.params input { width:100%; }
+  .desc-box { font-size:13px; color:#c3c8db; background:#14161f; border:1px solid var(--border); border-radius:7px; padding:10px 12px; margin-bottom:18px; }
+  textarea.json { width:100%; min-height:120px; background:#14161f; color:#c3e88d; border:1px solid var(--border); border-radius:7px; padding:10px; font-family:"Consolas",monospace; font-size:12px; resize:vertical; outline:none; }
+  .btn-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .resp-ex { border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+  .resp-ex-head { padding:9px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; background:#14161f; font-size:13px; }
+  .resp-ex-body { display:none; padding:10px; }
+  .resp-ex.open .resp-ex-body { display:block; }
+  .resp-ex.open .resp-ex-head .chevron { transform:rotate(90deg); }
+  .chevron { transition:transform .2s; color:var(--muted); }
+  .tabs { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+  .tab { padding:5px 11px; font-size:12px; border-radius:6px; background:#14161f; border:1px solid var(--border); cursor:pointer; color:var(--muted); }
+  .tab.active { color:var(--text); border-color:var(--accent1); }
+  pre.code { background:#0c0e15; border:1px solid var(--border); border-radius:7px; padding:12px; overflow:auto; font-family:"Consolas",monospace; font-size:12px; margin:0; color:#c3e88d; white-space:pre-wrap; word-break:break-word; }
+  .ch-toggle { display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px; }
+  .cors-warn { display:none; background:#2d230f; border:1px solid var(--amber); color:var(--amber); padding:10px 12px; border-radius:7px; font-size:12px; margin-top:10px; }
+  .resp-box { display:none; margin-top:14px; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .resp-meta { display:flex; gap:18px; padding:10px 12px; background:#14161f; font-size:13px; }
+  .status-pill { font-weight:700; padding:3px 9px; border-radius:6px; }
+  .icon-btn { background:none; border:1px solid var(--border); border-radius:6px; color:var(--muted); cursor:pointer; padding:4px 8px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-row">
+    <span class="brand">⚡ API Scanner</span>
+    <button class="btn btn-danger" onclick="window.close()">Close</button>
+  </div>
+  <div class="topbar-row row2" id="envRow"></div>
+</div>
+
+<div class="stats-bar">
+  <span class="method-badge m-{{ api.method }}">{{ api.method }}</span>
+  <span class="stat-path" id="statPath">{{ api.path }}</span>
+  <span class="stat-mname">{{ api.method_name }}()</span>
+</div>
+
+<div class="content">
+  <div class="card" id="apiCard"></div>
+</div>
+
+<script>
+const api = {{ api | tojson }};
+let cfg = {};
+let envUrls = {};
+let currentProject = '';
+let projectOverrides = {};
+
+function escHtml(s){ if(s==null) return ""; return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+function escAttr(s){ if(s==null) return ""; return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/'/g,"&#39;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+window.onload = async function(){
+  // Highlight path vars in the stats bar.
+  const sp = document.getElementById('statPath');
+  sp.innerHTML = escHtml(api.path).replace(/\{([^}]+)\}/g, '<span class="pv">{$1}</span>');
+
+  const r = await fetch('/api/config');
+  cfg = await r.json();
+  envUrls = cfg.urls || {LOCAL:'http://localhost:8080'};
+  currentProject = cfg.last_project || '';
+  projectOverrides = (cfg.project_overrides && cfg.project_overrides[currentProject]) ? cfg.project_overrides[currentProject] : {};
+
+  renderEnvRow();
+  renderCard();
+  // Auto-select LOCAL.
+  const sel = document.getElementById('env_sel');
+  if (sel){ sel.value = 'LOCAL'; onEnvChange(); }
+};
+
+function renderEnvRow(){
+  const row = document.getElementById('envRow');
+  row.innerHTML = '';
+  const keys = Object.keys(envUrls);
+  const ordered = ['LOCAL'].concat(keys.filter(k => k !== 'LOCAL'));
+  ordered.forEach(env => {
+    if (!(env in envUrls)) return;
+    const div = document.createElement('div');
+    div.className = 'env-item';
+    let html = `<span class="env-badge">${escHtml(env)}</span>
+      <input type="text" value="${escAttr(envUrls[env])}" oninput="saveEnvUrl('${escAttr(env)}', this.value)">`;
+    if (env !== 'LOCAL') html += `<button class="env-remove" onclick="removeEnv('${escAttr(env)}')">✕</button>`;
+    div.innerHTML = html;
+    row.appendChild(div);
+  });
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn btn-secondary';
+  addBtn.textContent = '+ Add Env';
+  addBtn.onclick = () => { document.getElementById('addEnvForm').style.display='flex'; addBtn.style.display='none'; };
+  row.appendChild(addBtn);
+  const form = document.createElement('div');
+  form.className = 'add-env-form'; form.id = 'addEnvForm';
+  form.innerHTML = `
+    <input type="text" id="newEnvName" placeholder="NAME" style="width:110px" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_]/g,'')">
+    <input type="text" id="newEnvUrl" placeholder="http://host:port" style="width:200px">
+    <button class="btn btn-primary" onclick="confirmAddEnv()">Add</button>
+    <button class="btn btn-secondary" onclick="renderEnvRow()">Cancel</button>`;
+  row.appendChild(form);
+}
+
+async function confirmAddEnv(){
+  const name = document.getElementById('newEnvName').value.trim();
+  const url = document.getElementById('newEnvUrl').value.trim();
+  if (!name || !url) return;
+  envUrls[name] = url; cfg.urls = envUrls;
+  await fetch('/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({urls: envUrls})});
+  renderEnvRow(); refreshEnvSelect();
+}
+
+async function removeEnv(env){
+  await fetch('/api/config/env/' + encodeURIComponent(env), {method:'DELETE'});
+  delete envUrls[env]; cfg.urls = envUrls;
+  renderEnvRow(); refreshEnvSelect();
+}
+
+function refreshEnvSelect(){
+  const sel = document.getElementById('env_sel');
+  if (!sel) return;
+  const cur = sel.value;
+  const keys = Object.keys(envUrls);
+  const ordered = ['LOCAL'].concat(keys.filter(k => k !== 'LOCAL'));
+  sel.innerHTML = ordered.filter(k => k in envUrls).map(k => `<option value="${escAttr(k)}">${escHtml(k)}</option>`).join('');
+  sel.value = (cur in envUrls) ? cur : 'LOCAL';
+}
+
+async function saveEnvUrl(env, val){
+  envUrls[env] = val; cfg.urls = envUrls;
+  await fetch('/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({urls: envUrls})});
+  const sel = document.getElementById('env_sel');
+  if (sel && sel.value === env) updateUrl();
+}
+
+function renderCard(){
+  const okey = api.method + ':' + api.path;
+  const ov = projectOverrides[okey] || {};
+  let body = '';
+
+  if (api.description) body += `<div class="desc-box">${escHtml(api.description)}</div>`;
+
+  const keys = Object.keys(envUrls);
+  const ordered = ['LOCAL'].concat(keys.filter(k => k !== 'LOCAL'));
+  body += `<div class="field-group"><label>Request URL</label>
+    <div class="url-row">
+      <select class="env-select" id="env_sel" onchange="onEnvChange()">
+        ${ordered.filter(k => k in envUrls).map(k => `<option value="${escAttr(k)}">${escHtml(k)}</option>`).join('')}
+      </select>
+      <input type="text" class="url-field" id="url_field">
+    </div></div>`;
+
+  if (api.path_vars && api.path_vars.length){
+    body += `<div class="field-group"><label>Path Variables</label>
+      <table class="params"><thead><tr><th>Name</th><th>Type</th><th>Value</th></tr></thead><tbody>`;
+    api.path_vars.forEach(pv => {
+      const saved = (ov.pathVars || []).find(x => x.name === pv.name);
+      const val = saved ? saved.value : '';
+      body += `<tr><td>${escHtml(pv.name)}</td><td>${escHtml(pv.type)}</td>
+        <td><input type="text" class="pv-input" data-name="${escAttr(pv.name)}" value="${escAttr(val)}" oninput="onParamInput()"></td></tr>`;
+    });
+    body += `</tbody></table></div>`;
+  }
+
+  if (api.query_params && api.query_params.length){
+    body += `<div class="field-group"><label>Query Parameters</label>
+      <table class="params"><thead><tr><th>Name</th><th>Type</th><th>Value</th></tr></thead><tbody>`;
+    api.query_params.forEach(qp => {
+      const saved = (ov.queryParams || []).find(x => x.name === qp.name);
+      const val = saved ? saved.value : '';
+      body += `<tr><td>${escHtml(qp.name)}</td><td>${escHtml(qp.type)}</td>
+        <td><input type="text" class="qp-input" data-name="${escAttr(qp.name)}" value="${escAttr(val)}" oninput="onParamInput()"></td></tr>`;
+    });
+    body += `</tbody></table></div>`;
+  }
+
+  if (api.request_headers && api.request_headers.length){
+    body += `<div class="field-group"><label>Request Headers</label>
+      <table class="params"><thead><tr><th>Name</th><th>Type</th><th>Value</th></tr></thead><tbody>`;
+    api.request_headers.forEach(rh => {
+      body += `<tr><td>${escHtml(rh.name)}</td><td>${escHtml(rh.type)}</td>
+        <td><input type="text" class="rh-input" data-name="${escAttr(rh.name)}"></td></tr>`;
+    });
+    body += `</tbody></table></div>`;
+  }
+
+  if (api.request_example != null){
+    const bodyVal = (ov.body != null) ? ov.body : api.request_example;
+    body += `<div class="field-group"><label>Request Body</label>
+      <textarea class="json" id="body_field" oninput="saveOverride()">${escHtml(bodyVal)}</textarea>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="prettifyJson()">Prettify</button>
+        <button class="btn btn-secondary" onclick="resetBody()">Reset to Default</button>
+      </div></div>`;
+  }
+
+  if (api.response_examples && api.response_examples.length){
+    body += `<div class="field-group"><label>Response Example</label>
+      <div class="resp-ex" id="respex">
+        <div class="resp-ex-head" onclick="toggleRespEx()"><span class="chevron">▶</span> Show example response</div>
+        <div class="resp-ex-body">`;
+    if (api.response_examples.length > 1){
+      body += `<div class="tabs">`;
+      api.response_examples.forEach((re, idx) => {
+        body += `<div class="tab ${idx===0?'active':''}" id="rtab_${idx}" onclick="switchRespTab(${idx})">${escHtml(re.label)}</div>`;
+      });
+      body += `</div>`;
+    }
+    api.response_examples.forEach((re, idx) => {
+      body += `<pre class="code respcode" id="rcode_${idx}" style="${idx===0?'':'display:none'}">${escHtml(re.example)}</pre>`;
+    });
+    body += `</div></div></div>`;
+  }
+
+  body += `<div class="field-group">
+    <div class="ch-toggle"><input type="checkbox" id="chtoggle" onchange="document.getElementById('chwrap').style.display=this.checked?'block':'none'"> <label for="chtoggle" style="margin:0;text-transform:none;">Add custom headers</label></div>
+    <div id="chwrap" style="display:none;">
+      <table class="params"><thead><tr><th>Key</th><th>Value</th><th></th></tr></thead><tbody id="chbody">
+        <tr><td><input type="text" class="ch-key"></td><td><input type="text" class="ch-val"></td><td><button class="icon-btn" onclick="chRemRow(this)">−</button></td></tr>
+      </tbody></table>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="chAddRow()">+ Add Row</button></div>
+    </div></div>`;
+
+  body += `<div class="btn-row">
+    <button class="btn btn-primary" id="tryBtn" onclick="tryItOut()">Try it out</button>
+    <button class="btn btn-secondary" onclick="generateReadme()">Generate README</button>
+  </div>`;
+
+  body += `<div class="cors-warn" id="corsWarn">Network request failed — possible CORS or connectivity issue.</div>`;
+  body += `<div class="resp-box" id="respBox">
+    <div class="resp-meta">
+      <span>Status: <span class="status-pill" id="statusPill">—</span></span>
+      <span>Time: <span id="timeVal">—</span></span>
+    </div>
+    <div class="tabs" style="padding:8px 12px 0;">
+      <div class="tab active" id="btab" onclick="switchTab('body',this)">Body</div>
+      <div class="tab" id="htab" onclick="switchTab('headers',this)">Headers</div>
+    </div>
+    <pre class="code" id="respBody" style="border:none;border-radius:0;"></pre>
+    <pre class="code" id="respHeaders" style="display:none;border:none;border-radius:0;"></pre>
+  </div>`;
+
+  document.getElementById('apiCard').innerHTML = body;
+}
+
+function onEnvChange(){ updateUrl(); }
+function onParamInput(){ updateUrl(); saveOverride(); }
+
+function updateUrl(){
+  const sel = document.getElementById('env_sel');
+  const env = sel ? sel.value : 'LOCAL';
+  const base = (envUrls[env]||'').replace(/\/+$/,'');
+  let path = api.path;
+  document.querySelectorAll('.pv-input').forEach(inp => {
+    const v = inp.value.trim();
+    if (v) path = path.replace('{' + inp.getAttribute('data-name') + '}', encodeURIComponent(v));
+  });
+  const qs = [];
+  document.querySelectorAll('.qp-input').forEach(inp => {
+    const v = inp.value.trim();
+    if (v) qs.push(encodeURIComponent(inp.getAttribute('data-name')) + '=' + encodeURIComponent(v));
+  });
+  let url = base + path;
+  if (qs.length) url += '?' + qs.join('&');
+  document.getElementById('url_field').value = url;
+}
+
+async function saveOverride(){
+  const okey = api.method + ':' + api.path;
+  const bodyEl = document.getElementById('body_field');
+  const pathVars = []; document.querySelectorAll('.pv-input').forEach(i => pathVars.push({name:i.getAttribute('data-name'), value:i.value}));
+  const queryParams = []; document.querySelectorAll('.qp-input').forEach(i => queryParams.push({name:i.getAttribute('data-name'), value:i.value}));
+  const payload = {pathVars, queryParams};
+  if (bodyEl) payload.body = bodyEl.value;
+  projectOverrides[okey] = payload;
+  await fetch('/api/config/override', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({project: currentProject, key: okey, payload})});
+}
+
+function prettifyJson(){
+  const el = document.getElementById('body_field');
+  try { el.value = JSON.stringify(JSON.parse(el.value), null, 2); } catch(e){}
+}
+
+function resetBody(){
+  const el = document.getElementById('body_field');
+  if (el && api.request_example != null) el.value = api.request_example;
+  const okey = api.method + ':' + api.path;
+  if (projectOverrides[okey]) delete projectOverrides[okey].body;
+  saveOverride();
+}
+
+function toggleRespEx(){ document.getElementById('respex').classList.toggle('open'); }
+
+function switchRespTab(idx){
+  document.querySelectorAll('.respcode').forEach((pre,i)=> pre.style.display = (i===idx)?'block':'none');
+  api.response_examples.forEach((re,i)=>{ const t=document.getElementById('rtab_'+i); if(t) t.classList.toggle('active', i===idx); });
+}
+
+function switchTab(tab, el){
+  document.getElementById('btab').classList.toggle('active', tab==='body');
+  document.getElementById('htab').classList.toggle('active', tab==='headers');
+  document.getElementById('respBody').style.display = (tab==='body')?'block':'none';
+  document.getElementById('respHeaders').style.display = (tab==='headers')?'block':'none';
+}
+
+function chAddRow(){
+  const tbody = document.getElementById('chbody');
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="text" class="ch-key"></td><td><input type="text" class="ch-val"></td><td><button class="icon-btn" onclick="chRemRow(this)">−</button></td>`;
+  tbody.appendChild(tr);
+}
+function chRemRow(btn){
+  const tbody = btn.closest('tbody');
+  if (tbody.rows.length <= 1){ btn.closest('tr').querySelectorAll('input').forEach(i=>i.value=''); }
+  else { btn.closest('tr').remove(); }
+}
+
+async function tryItOut(){
+  const btn = document.getElementById('tryBtn');
+  const url = document.getElementById('url_field').value.trim();
+  document.getElementById('corsWarn').style.display = 'none';
+
+  const headers = {};
+  document.querySelectorAll('.rh-input').forEach(inp => { if (inp.value.trim()) headers[inp.getAttribute('data-name')] = inp.value.trim(); });
+  document.querySelectorAll('#chbody tr').forEach(tr => {
+    const k = tr.querySelector('.ch-key'); const v = tr.querySelector('.ch-val');
+    if (k && k.value.trim()) headers[k.value.trim()] = v ? v.value : '';
+  });
+
+  let body = null;
+  const bodyEl = document.getElementById('body_field');
+  if (bodyEl && bodyEl.value.trim()){ body = bodyEl.value; if (!('Content-Type' in headers)) headers['Content-Type']='application/json'; }
+
+  const orig = btn.innerHTML;
+  btn.disabled = true; btn.innerHTML = '<span class="mini-spin"></span>Sending...';
+  const controller = new AbortController();
+  const timer = setTimeout(()=>controller.abort(), 65000);
+  try {
+    const r = await fetch('/api/proxy', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({url, method: api.method, headers, body}), signal: controller.signal});
+    clearTimeout(timer);
+    showResponse(await r.json());
+  } catch(e){
+    clearTimeout(timer);
+    if (e.name === 'AbortError'){ showResponse({status:0, statusText:'Timeout', body:'Request timed out after 65s.', headers:{}, elapsed:65000}); }
+    else { document.getElementById('corsWarn').style.display='block'; showResponse({status:0, statusText:'Network Error', body:String(e), headers:{}, elapsed:0}); }
+  } finally { btn.disabled=false; btn.innerHTML=orig; }
+}
+
+function showResponse(d){
+  document.getElementById('respBox').style.display = 'block';
+  const pill = document.getElementById('statusPill');
+  const status = d.status || 0;
+  pill.textContent = status + (d.statusText ? (' '+d.statusText) : '');
+  let color = '#8a90a6';
+  if (status>=200 && status<300) color='var(--green)';
+  else if (status>=400 && status<500) color='var(--orange)';
+  else if (status>=500 || status===0) color='var(--danger)';
+  pill.style.color = color;
+  document.getElementById('timeVal').textContent = (d.elapsed||0) + ' ms';
+  let bt = d.body || '';
+  try { bt = JSON.stringify(JSON.parse(bt), null, 2); } catch(e){}
+  document.getElementById('respBody').textContent = bt;
+  let ht = '';
+  if (d.headers) ht = Object.entries(d.headers).map(([k,v])=>`${k}: ${v}`).join('\n');
+  document.getElementById('respHeaders').textContent = ht;
+}
+
+async function generateReadme(){
+  const urlField = document.getElementById('url_field');
+  const readmeUrl = urlField ? urlField.value : '';
+  let liveTest = null;
+  const box = document.getElementById('respBox');
+  if (box && box.style.display !== 'none'){
+    const pathVars = []; document.querySelectorAll('.pv-input').forEach(i=>pathVars.push({name:i.getAttribute('data-name'), value:i.value}));
+    const queryParams = []; document.querySelectorAll('.qp-input').forEach(i=>queryParams.push({name:i.getAttribute('data-name'), value:i.value}));
+    const bodyEl = document.getElementById('body_field');
+    liveTest = {
+      url: readmeUrl, method: api.method, pathVars, queryParams,
+      body: bodyEl ? bodyEl.value : '',
+      status: document.getElementById('statusPill').textContent,
+      time: document.getElementById('timeVal').textContent,
+      respBody: document.getElementById('respBody').textContent,
+      respHeaders: document.getElementById('respHeaders').textContent,
+    };
+  }
+  const r = await fetch('/api/generate-readme', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({api, live_test: liveTest, readme_url: readmeUrl})});
+  const blob = await r.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (api.method_name || 'api') + '_README.html';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,9 @@
+{
+    "port": 5000,
+    "last_project": "",
+    "recent_projects": [],
+    "urls": {
+        "LOCAL": "http://localhost:8080"
+    },
+    "project_overrides": {}
+}

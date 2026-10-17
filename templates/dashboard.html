@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API Scanner — Dashboard</title>
+<style>
+  :root {
+    --bg: #0f1117; --card: #1e2130; --border: #2a2f45;
+    --text: #e6e8ef; --muted: #8a90a6;
+    --accent1: #6366f1; --accent2: #8b5cf6;
+    --danger: #ef4444; --amber: #fbbf24;
+    --green: #22c55e; --orange: #f59e0b;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  .topbar { position:sticky; top:0; z-index:50; background:#141622; border-bottom:1px solid var(--border); }
+  .topbar-row { display:flex; align-items:center; gap:10px; padding:10px 18px; flex-wrap:wrap; }
+  .topbar-row.row2 { border-top:1px solid var(--border); gap:8px; }
+  .brand { font-size:18px; font-weight:700; display:flex; align-items:center; gap:8px;
+    background:linear-gradient(90deg,var(--accent1),var(--accent2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  input[type="text"], input[type="number"] { background:#14161f; color:var(--text); border:1px solid var(--border); border-radius:7px; padding:8px 10px; font-size:13px; outline:none; }
+  input:focus { border-color:var(--accent1); }
+  .search { flex:1; min-width:160px; }
+  .btn { border:none; border-radius:7px; padding:8px 14px; font-size:13px; cursor:pointer; font-weight:600; }
+  .btn-primary { background:linear-gradient(90deg,var(--accent1),var(--accent2)); color:#fff; }
+  .btn-secondary { background:#262a3d; color:var(--text); border:1px solid var(--border); }
+  .btn-secondary:hover { border-color:var(--accent1); }
+  .btn-danger { background:#2a1414; color:#ffb4b4; border:1px solid var(--danger); }
+  .btn:disabled { opacity:.5; cursor:not-allowed; }
+  .port-input { width:88px; }
+  .mini-spin { display:inline-block; width:13px; height:13px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:-2px; margin-right:5px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+
+  .env-item { display:flex; align-items:center; gap:6px; background:#14161f; border:1px solid var(--border); border-radius:7px; padding:5px 8px; }
+  .env-badge { font-size:11px; font-weight:700; color:var(--accent2); padding:2px 7px; background:#20233a; border-radius:5px; }
+  .env-item input { width:220px; }
+  .env-remove { background:none; border:none; color:var(--muted); cursor:pointer; }
+  .env-remove:hover { color:var(--danger); }
+  .add-env-form { display:none; align-items:center; gap:6px; background:#14161f; border:1px solid var(--accent1); border-radius:7px; padding:5px 8px; }
+
+  .restart-banner { display:none; width:100%; background:#2d230f; border:1px solid var(--amber); color:var(--amber); padding:8px 14px; border-radius:7px; font-size:13px; }
+
+  .stats-bar { display:flex; gap:26px; padding:14px 20px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .stat { display:flex; flex-direction:column; }
+  .stat .num { font-size:20px; font-weight:700; }
+  .stat .lbl { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; }
+  .stat .proj { font-size:13px; color:var(--muted); max-width:400px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+
+  .content { padding:20px; max-width:1100px; margin:0 auto; }
+  .controller-group { background:var(--card); border:1px solid var(--border); border-radius:12px; margin-bottom:16px; overflow:hidden; }
+  .ctrl-header { display:flex; align-items:center; gap:12px; padding:14px 18px; cursor:pointer; user-select:none; }
+  .ctrl-header:hover { background:#232740; }
+  .ctrl-name { font-size:16px; font-weight:700; flex:1; }
+  .count-badge { background:#20233a; color:var(--accent2); font-size:12px; font-weight:700; padding:3px 10px; border-radius:99px; }
+  .chevron { transition:transform .2s; color:var(--muted); }
+  .ctrl-body { display:none; padding:0 14px 14px; }
+  .controller-group.open .ctrl-body { display:block; }
+  .controller-group.open .ctrl-header .chevron { transform:rotate(90deg); }
+
+  .api-card { background:#171a27; border:1px solid var(--border); border-radius:10px; margin:10px 0; overflow:hidden; transition:opacity .2s; }
+  .api-head { display:flex; align-items:center; gap:12px; padding:12px 14px; cursor:pointer; }
+  .api-head:hover { background:#1c2033; }
+  .method-badge { font-size:11px; font-weight:700; padding:4px 9px; border-radius:6px; min-width:58px; text-align:center; }
+  .m-GET { background:#0d3321; color:#4ade80; }
+  .m-POST { background:#1e2f4a; color:#60a5fa; }
+  .m-PUT { background:#3a2a1e; color:#fbbf24; }
+  .m-DELETE { background:#3a1e1e; color:#f87171; }
+  .m-PATCH { background:#2d1e4a; color:#c4b5fd; }
+  .api-path { font-family:"Consolas",monospace; font-size:13px; flex:1; }
+  .api-path .pv { color:var(--amber); }
+  .api-mname { font-size:12px; color:var(--muted); }
+  .icon-btn { background:none; border:1px solid var(--border); border-radius:6px; color:var(--muted); cursor:pointer; padding:4px 8px; font-size:12px; }
+  .icon-btn:hover { color:var(--text); border-color:var(--accent1); }
+
+  .api-body { display:none; padding:14px; border-top:1px solid var(--border); }
+  .api-card.open .api-body { display:block; }
+  .api-card.open .api-head .chevron { transform:rotate(90deg); }
+  .api-card.dim { opacity:.35; }
+
+  .field-group { margin-bottom:16px; }
+  .field-group > label { display:block; font-size:12px; color:var(--muted); text-transform:uppercase; letter-spacing:.5px; margin-bottom:7px; }
+  .url-row { display:flex; gap:8px; }
+  .env-select { background:#14161f; color:var(--text); border:1px solid var(--border); border-radius:7px; padding:8px; font-size:13px; }
+  .url-field { flex:1; }
+  table.params { width:100%; border-collapse:collapse; font-size:13px; }
+  table.params th { text-align:left; color:var(--muted); font-weight:600; font-size:11px; padding:5px 8px; border-bottom:1px solid var(--border); }
+  table.params td { padding:5px 8px; }
+  table.params input { width:100%; }
+  .desc-box { font-size:13px; color:#c3c8db; background:#14161f; border:1px solid var(--border); border-radius:7px; padding:10px 12px; margin-bottom:16px; }
+  textarea.json { width:100%; min-height:120px; background:#14161f; color:#c3e88d; border:1px solid var(--border); border-radius:7px; padding:10px; font-family:"Consolas",monospace; font-size:12px; resize:vertical; outline:none; }
+  textarea.json:focus { border-color:var(--accent1); }
+  .btn-row { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .resp-ex { border:1px solid var(--border); border-radius:7px; overflow:hidden; }
+  .resp-ex-head { padding:9px 12px; cursor:pointer; display:flex; align-items:center; gap:8px; background:#14161f; font-size:13px; }
+  .resp-ex-body { display:none; padding:10px; }
+  .resp-ex.open .resp-ex-body { display:block; }
+  .resp-ex.open .resp-ex-head .chevron { transform:rotate(90deg); }
+  .tabs { display:flex; gap:6px; margin-bottom:8px; flex-wrap:wrap; }
+  .tab { padding:5px 11px; font-size:12px; border-radius:6px; background:#14161f; border:1px solid var(--border); cursor:pointer; color:var(--muted); }
+  .tab.active { color:var(--text); border-color:var(--accent1); }
+  pre.code { background:#0c0e15; border:1px solid var(--border); border-radius:7px; padding:12px; overflow:auto; font-family:"Consolas",monospace; font-size:12px; margin:0; color:#c3e88d; white-space:pre-wrap; word-break:break-word; }
+  .ch-toggle { display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px; }
+  .cors-warn { display:none; background:#2d230f; border:1px solid var(--amber); color:var(--amber); padding:10px 12px; border-radius:7px; font-size:12px; margin-top:10px; }
+  .resp-box { display:none; margin-top:14px; border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  .resp-meta { display:flex; gap:18px; padding:10px 12px; background:#14161f; font-size:13px; align-items:center; }
+  .status-pill { font-weight:700; padding:3px 9px; border-radius:6px; }
+  .warnings { background:#2d230f; border:1px solid var(--amber); color:var(--amber); border-radius:10px; padding:14px 18px; margin-bottom:16px; }
+  .warnings h3 { margin:0 0 8px; cursor:pointer; font-size:14px; }
+  .warnings ul { margin:8px 0 0; padding-left:18px; }
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="topbar-row">
+    <span class="brand">⚡ API Scanner</span>
+    <input type="text" class="search" id="searchInput" placeholder="Search path, method, controller... (Enter)" onkeydown="if(event.key==='Enter')doSearch()">
+    <button class="btn btn-secondary" onclick="toggleAll(true)">Expand All</button>
+    <button class="btn btn-secondary" onclick="toggleAll(false)">Collapse All</button>
+    <button class="btn btn-secondary" onclick="exportPostman()">Export Postman</button>
+    <button class="btn btn-secondary" id="rescanBtn" onclick="rescan()">Rescan</button>
+    <input type="number" class="port-input" id="portInput" oninput="onPortChange()">
+    <button class="btn btn-primary" id="restartBtn" style="display:none" onclick="doRestart()">Restart</button>
+    <button class="btn btn-danger" onclick="window.location.href='/'">Close</button>
+  </div>
+  <div class="topbar-row row2" id="envRow"></div>
+</div>
+
+<div class="stats-bar">
+  <div class="stat"><span class="num" id="statControllers">0</span><span class="lbl">Controllers</span></div>
+  <div class="stat"><span class="num" id="statApis">0</span><span class="lbl">APIs</span></div>
+  <div class="stat"><span class="proj" id="statProject">—</span><span class="lbl">Project</span></div>
+  <div class="stat"><span class="proj" id="statSummary">—</span><span class="lbl">Summary</span></div>
+</div>
+
+<div class="content" id="content"></div>
+
+<script>
+let allControllers = [];
+let cfg = {};
+let pendingPort = null;
+let projectOverrides = {};
+
+function escHtml(s){ if(s==null) return ""; return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;"); }
+function escAttr(s){ if(s==null) return ""; return String(s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/'/g,"&#39;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+
+window.onload = async function(){
+  const r = await fetch('/api/config');
+  cfg = await r.json();
+  const lp = cfg.last_project || '';
+  projectOverrides = (cfg.project_overrides && cfg.project_overrides[lp]) ? cfg.project_overrides[lp] : {};
+  document.getElementById('portInput').value = cfg.port || 5000;
+  document.getElementById('statProject').textContent = lp || '—';
+  document.getElementById('statProject').title = lp || '';
+  renderEnvRow();
+  loadResults();
+};
+
+function renderEnvRow(){
+  const row = document.getElementById('envRow');
+  row.innerHTML = '';
+  const urls = cfg.urls || {LOCAL:'http://localhost:8080'};
+  const keys = Object.keys(urls);
+  const ordered = ['LOCAL'].concat(keys.filter(k => k !== 'LOCAL'));
+
+  ordered.forEach(env => {
+    if (!(env in urls)) return;
+    const div = document.createElement('div');
+    div.className = 'env-item';
+    let html = `<span class="env-badge">${escHtml(env)}</span>
+      <input type="text" value="${escAttr(urls[env])}" oninput="saveEnvUrl('${escAttr(env)}', this.value)">`;
+    if (env !== 'LOCAL'){
+      html += `<button class="env-remove" onclick="removeEnv('${escAttr(env)}')">✕</button>`;
+    }
+    div.innerHTML = html;
+    row.appendChild(div);
+  });
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'btn btn-secondary';
+  addBtn.textContent = '+ Add Env';
+  addBtn.onclick = () => {
+    document.getElementById('addEnvForm').style.display = 'flex';
+    addBtn.style.display = 'none';
+  };
+  row.appendChild(addBtn);
+
+  const form = document.createElement('div');
+  form.className = 'add-env-form';
+  form.id = 'addEnvForm';
+  form.innerHTML = `
+    <input type="text" id="newEnvName" placeholder="NAME" style="width:110px" oninput="this.value=this.value.toUpperCase().replace(/[^A-Z0-9_]/g,'')">
+    <input type="text" id="newEnvUrl" placeholder="http://host:port" style="width:200px">
+    <button class="btn btn-primary" onclick="confirmAddEnv()">Add</button>
+    <button class="btn btn-secondary" onclick="cancelAddEnv()">Cancel</button>`;
+  row.appendChild(form);
+
+  const banner = document.createElement('div');
+  banner.className = 'restart-banner';
+  banner.id = 'restartBanner';
+  banner.textContent = 'Port changed. Click Restart to apply.';
+  row.appendChild(banner);
+}
+
+function cancelAddEnv(){
+  document.getElementById('addEnvForm').style.display = 'none';
+  renderEnvRow();
+}
+
+async function confirmAddEnv(){
+  const name = document.getElementById('newEnvName').value.trim();
+  const url = document.getElementById('newEnvUrl').value.trim();
+  if (!name || !url) return;
+  cfg.urls[name] = url;
+  await fetch('/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({urls: cfg.urls})});
+  renderEnvRow();
+  refreshEnvSelects();
+}
+
+async function removeEnv(env){
+  await fetch('/api/config/env/' + encodeURIComponent(env), {method:'DELETE'});
+  delete cfg.urls[env];
+  renderEnvRow();
+  refreshEnvSelects();
+}
+
+function refreshEnvSelects(){
+  document.querySelectorAll('.env-select').forEach(sel => {
+    const cur = sel.value;
+    const keys = Object.keys(cfg.urls || {});
+    const ordered = ['LOCAL'].concat(keys.filter(k => k !== 'LOCAL'));
+    sel.innerHTML = ordered.filter(k => k in cfg.urls).map(k => `<option value="${escAttr(k)}">${escHtml(k)}</option>`).join('');
+    sel.value = (cur in cfg.urls) ? cur : 'LOCAL';
+  });
+}
+
+async function loadResults(){
+  const r = await fetch('/api/scan/results');
+  const d = await r.json();
+  allControllers = d.controllers || [];
+  document.getElementById('statControllers').textContent = d.total_controllers || 0;
+  document.getElementById('statApis').textContent = d.total_apis || 0;
+  document.getElementById('statSummary').textContent = `${d.total_controllers||0} controllers, ${d.total_apis||0} APIs`;
+  renderControllers(allControllers, d.warnings || []);
+}
+
+function renderControllers(controllers, warnings){
+  const content = document.getElementById('content');
+  let html = '';
+
+  if (warnings && warnings.length){
+    html += `<div class="warnings"><h3 onclick="toggleWarnings()">⚠ ${warnings.length} warning(s) — click to toggle</h3>
+      <ul id="warnList">${warnings.map(w => `<li>${escHtml(w)}</li>`).join('')}</ul></div>`;
+  }
+
+  controllers.forEach((ctrl, ci) => {
+    html += `<div class="controller-group" id="ctrl_${ci}">
+      <div class="ctrl-header" onclick="toggleController(${ci})">
+        <span class="chevron">▶</span>
+        <span class="ctrl-name">${escHtml(ctrl.name)}</span>
+        <span class="count-badge">${ctrl.apis.length}</span>
+      </div>
+      <div class="ctrl-body">`;
+    ctrl.apis.forEach((api, ai) => { html += renderApiCard(api, ci, ai); });
+    html += `</div></div>`;
+  });
+
+  if (!controllers.length){
+    html += `<div style="text-align:center;color:var(--muted);padding:60px;">No APIs found.</div>`;
+  }
+
+  content.innerHTML = html;
+
+  // Ensure every env dropdown reflects current cfg.urls, then auto-apply LOCAL.
+  refreshEnvSelects();
+  controllers.forEach((ctrl, ci) => ctrl.apis.forEach((api, ai) => {
+    const id = ci + '_' + ai;
+    const sel = document.getElementById('env_' + id);
+    if (sel){
+      if ([...sel.options].some(o => o.value === 'LOCAL')) sel.value = 'LOCAL';
+      onEnvChange(id, api.path);
+    }
+  }));
+}
+
+function highlightPathVars(path){
+  return escHtml(path).replace(/\{([^}]+)\}/g, '<span class="pv">{$1}</span>');
+}
+
+function renderApiCard(api, ci, ai){
+  const id = ci + '_' + ai;
+  const okey = api.method + ':' + api.path;
+  const ov = projectOverrides[okey] || {};
+
+  let body = '';
+  // Description.
+  if (api.description){
+    body += `<div class="desc-box">${escHtml(api.description)}</div>`;
+  }
+
+  // URL row. Pre-populate env options (LOCAL first), LOCAL selected by default.
+  const envKeys = Object.keys(cfg.urls || {LOCAL:'http://localhost:8080'});
+  const envOrdered = ['LOCAL'].concat(envKeys.filter(k => k !== 'LOCAL'));
+  const envOptions = envOrdered
+    .filter(k => k in (cfg.urls || {LOCAL:1}))
+    .map(k => `<option value="${escAttr(k)}"${k === 'LOCAL' ? ' selected' : ''}>${escHtml(k)}</option>`)
+    .join('');
+  body += `<div class="field-group"><label>Request URL</label>
+    <div class="url-row">
+      <select class="env-select" id="env_${id}" onchange="onEnvChange('${id}','${escAttr(api.path)}')">${envOptions}</select>
+      <input type="text" class="url-field" id="url_${id}">
+    </div></div>`;
+
+  // Path variables.
+  if (api.path_vars && api.path_vars.length){
+    body += `<div class="field-group"><label>Path Variables</label>
+      <table class="params"><thead><tr><th>Name</th><th>Type</th><th>Value</th></tr></thead><tbody>`;
+    api.path_vars.forEach(pv => {
+      const saved = (ov.pathVars || []).find(x => x.name === pv.name);
+      const val = saved ? saved.value : '';
+      body += `<tr>
+        <td>${escHtml(pv.name)}</td><td>${escHtml(pv.type)}</td>
+        <td><input type="text" class="pv-input" data-id="${id}" data-name="${escAttr(pv.name)}" value="${escAttr(val)}" oninput="onParamInput('${id}','${escAttr(api.path)}')"></td>
+      </tr>`;
+    });
+    body += `</tbody></table></div>`;
+  }
+
+  // Query parameters.
+  if (api.query_params && api.query_params.length){
+    body += `<div class="field-group"><label>Query Parameters</label>
+      <table class="params"><thead><tr><th>Name</th><th>Type</th><th>Value</th></tr></thead><tbody>`;
+    api.query_params.forEach(qp => {
+      const saved = (ov.queryParams || []).find(x => x.name === qp.name);
+      const val = saved ? saved.value : '';
+      body += `<tr>
+        <td>${escHtml(qp.name)}</td><td>${escHtml(qp.type)}</td>
+        <td><input type="text" class="qp-input" data-id="${id}" data-name="${escAttr(qp.name)}" value="${escAttr(val)}" oninput="onParamInput('${id}','${escAttr(api.path)}')"></td>
+      </tr>`;
+    });
+    body += `</tbody></table></div>`;
+  }
+
+  // Request headers.
+  if (api.request_headers && api.request_headers.length){
+    body += `<div class="field-group"><label>Request Headers</label>
+      <table class="params"><thead><tr><th>Name</th><th>Type</th><th>Value</th></tr></thead><tbody>`;
+    api.request_headers.forEach(rh => {
+      body += `<tr>
+        <td>${escHtml(rh.name)}</td><td>${escHtml(rh.type)}</td>
+        <td><input type="text" class="rh-input" data-name="${escAttr(rh.name)}"></td>
+      </tr>`;
+    });
+    body += `</tbody></table></div>`;
+  }
+
+  // Request body.
+  if (api.request_example != null){
+    const bodyVal = (ov.body != null) ? ov.body : api.request_example;
+    body += `<div class="field-group"><label>Request Body</label>
+      <textarea class="json" id="body_${id}" oninput="saveOverride('${id}')">${escHtml(bodyVal)}</textarea>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="prettifyJson('body_${id}')">Prettify</button>
+        <button class="btn btn-secondary" onclick="resetBody('body_${id}','${id}')">Reset to Default</button>
+      </div></div>`;
+  }
+
+  // Response example.
+  if (api.response_examples && api.response_examples.length){
+    body += `<div class="field-group"><label>Response Example</label>
+      <div class="resp-ex" id="respex_${id}">
+        <div class="resp-ex-head" onclick="toggleRespEx('${id}')"><span class="chevron">▶</span> Show example response</div>
+        <div class="resp-ex-body">`;
+    if (api.response_examples.length > 1){
+      body += `<div class="tabs">`;
+      api.response_examples.forEach((re, idx) => {
+        body += `<div class="tab ${idx===0?'active':''}" onclick="switchRespTab('${id}',${idx})" id="rtab_${id}_${idx}">${escHtml(re.label)}</div>`;
+      });
+      body += `</div>`;
+    }
+    api.response_examples.forEach((re, idx) => {
+      body += `<pre class="code respcode_${id}" id="rcode_${id}_${idx}" style="${idx===0?'':'display:none'}">${escHtml(re.example)}</pre>`;
+    });
+    body += `</div></div></div>`;
+  }
+
+  // Custom headers toggle.
+  body += `<div class="field-group">
+    <div class="ch-toggle"><input type="checkbox" id="chtoggle_${id}" onchange="document.getElementById('chwrap_${id}').style.display=this.checked?'block':'none'"> <label for="chtoggle_${id}" style="margin:0;text-transform:none;">Add custom headers</label></div>
+    <div id="chwrap_${id}" style="display:none;">
+      <table class="params"><thead><tr><th>Key</th><th>Value</th><th></th></tr></thead><tbody id="chbody_${id}">
+        <tr><td><input type="text" class="ch-key"></td><td><input type="text" class="ch-val"></td><td><button class="icon-btn" onclick="chRemRow(this)">−</button></td></tr>
+      </tbody></table>
+      <div class="btn-row"><button class="btn btn-secondary" onclick="chAddRow('chbody_${id}')">+ Add Row</button></div>
+    </div></div>`;
+
+  // Action buttons.
+  body += `<div class="btn-row">
+    <button class="btn btn-primary" id="try_${id}" onclick="tryItOut('${id}')">Try it out</button>
+    <button class="btn btn-secondary" onclick="generateReadme('${id}')">Generate README</button>
+  </div>`;
+
+  // CORS warning + response box.
+  body += `<div class="cors-warn" id="cors_${id}">Network request failed — this may be a CORS or connection issue. The target server must allow cross-origin requests, or be reachable from this machine.</div>`;
+  body += `<div class="resp-box" id="respbox_${id}">
+    <div class="resp-meta">
+      <span>Status: <span class="status-pill" id="status_${id}">—</span></span>
+      <span>Time: <span id="time_${id}">—</span></span>
+    </div>
+    <div class="tabs" style="padding:8px 12px 0;">
+      <div class="tab active" id="btab_${id}" onclick="switchTab('${id}','body',this)">Body</div>
+      <div class="tab" id="htab_${id}" onclick="switchTab('${id}','headers',this)">Headers</div>
+    </div>
+    <pre class="code" id="respbody_${id}" style="border:none;border-radius:0;"></pre>
+    <pre class="code" id="respheaders_${id}" style="display:none;border:none;border-radius:0;"></pre>
+  </div>`;
+
+  return `<div class="api-card" id="api_${id}">
+    <div class="api-head" onclick="toggleApi('${id}')">
+      <span class="method-badge m-${escHtml(api.method)}">${escHtml(api.method)}</span>
+      <span class="api-path">${highlightPathVars(api.path)}</span>
+      <span class="api-mname">${escHtml(api.method_name)}()</span>
+      <button class="icon-btn" onclick="event.stopPropagation();openInNewTab(${ci},${ai})">↗</button>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="api-body">${body}</div>
+  </div>`;
+}
+
+function getApiData(id){
+  const [ci, ai] = id.split('_').map(Number);
+  return allControllers[ci].apis[ai];
+}
+
+function toggleController(ci){
+  document.getElementById('ctrl_' + ci).classList.toggle('open');
+}
+
+function toggleApi(id){
+  const card = document.getElementById('api_' + id);
+  const wasOpen = card.classList.contains('open');
+  if (wasOpen){
+    card.classList.remove('open');
+    document.querySelectorAll('.api-card').forEach(c => c.classList.remove('dim'));
+  } else {
+    card.classList.add('open');
+    document.querySelectorAll('.api-card').forEach(c => { if (c !== card) c.classList.add('dim'); });
+  }
+}
+
+function toggleRespEx(id){ document.getElementById('respex_' + id).classList.toggle('open'); }
+
+function toggleAll(expand){
+  document.querySelectorAll('.controller-group').forEach(g => g.classList.toggle('open', expand));
+}
+
+function toggleWarnings(){
+  const el = document.getElementById('warnList');
+  el.style.display = (el.style.display === 'none') ? 'block' : 'none';
+}
+
+function onEnvChange(id, apiPath){
+  const sel = document.getElementById('env_' + id);
+  const env = sel.value;
+  updateUrl(id);
+}
+
+function onParamInput(id, apiPath){
+  updateUrl(id);
+  saveOverride(id);
+}
+
+function updateUrl(id){
+  const api = getApiData(id);
+  const sel = document.getElementById('env_' + id);
+  const env = sel ? sel.value : 'LOCAL';
+  const base = (cfg.urls && cfg.urls[env]) ? cfg.urls[env].replace(/\/+$/,'') : '';
+
+  let path = api.path;
+  document.querySelectorAll(`.pv-input[data-id="${id}"]`).forEach(inp => {
+    const name = inp.getAttribute('data-name');
+    const val = inp.value.trim();
+    if (val) path = path.replace('{' + name + '}', encodeURIComponent(val));
+  });
+
+  const qs = [];
+  document.querySelectorAll(`.qp-input[data-id="${id}"]`).forEach(inp => {
+    const name = inp.getAttribute('data-name');
+    const val = inp.value.trim();
+    if (val) qs.push(encodeURIComponent(name) + '=' + encodeURIComponent(val));
+  });
+
+  let url = base + path;
+  if (qs.length) url += '?' + qs.join('&');
+  const field = document.getElementById('url_' + id);
+  if (field) field.value = url;
+}
+
+async function saveEnvUrl(env, val){
+  cfg.urls[env] = val;
+  await fetch('/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({urls: cfg.urls})});
+  // Live-update any card using this env.
+  document.querySelectorAll('.env-select').forEach(sel => {
+    if (sel.value === env){
+      const id = sel.id.replace('env_', '');
+      updateUrl(id);
+    }
+  });
+}
+
+function prettifyJson(elid){
+  const el = document.getElementById(elid);
+  try {
+    el.value = JSON.stringify(JSON.parse(el.value), null, 2);
+  } catch(e){ /* leave as-is on invalid JSON */ }
+}
+
+async function saveOverride(id){
+  const api = getApiData(id);
+  const okey = api.method + ':' + api.path;
+  const lp = cfg.last_project || '';
+
+  const bodyEl = document.getElementById('body_' + id);
+  const pathVars = [];
+  document.querySelectorAll(`.pv-input[data-id="${id}"]`).forEach(inp => {
+    pathVars.push({name: inp.getAttribute('data-name'), value: inp.value});
+  });
+  const queryParams = [];
+  document.querySelectorAll(`.qp-input[data-id="${id}"]`).forEach(inp => {
+    queryParams.push({name: inp.getAttribute('data-name'), value: inp.value});
+  });
+
+  const payload = {pathVars, queryParams};
+  if (bodyEl) payload.body = bodyEl.value;
+
+  projectOverrides[okey] = payload;
+  await fetch('/api/config/override', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({project: lp, key: okey, payload})});
+}
+
+function resetBody(elid, id){
+  const api = getApiData(id);
+  const el = document.getElementById(elid);
+  if (el && api.request_example != null) el.value = api.request_example;
+  // Keep pathVars/queryParams; clear only body in the override.
+  const okey = api.method + ':' + api.path;
+  if (projectOverrides[okey]) delete projectOverrides[okey].body;
+  saveOverride(id);
+}
+
+function switchTab(id, tab, el){
+  const bodyEl = document.getElementById('respbody_' + id);
+  const hdrEl = document.getElementById('respheaders_' + id);
+  document.getElementById('btab_' + id).classList.toggle('active', tab==='body');
+  document.getElementById('htab_' + id).classList.toggle('active', tab==='headers');
+  bodyEl.style.display = (tab==='body') ? 'block' : 'none';
+  hdrEl.style.display = (tab==='headers') ? 'block' : 'none';
+}
+
+function switchRespTab(id, idx){
+  document.querySelectorAll(`.respcode_${id}`).forEach((pre, i) => {
+    pre.style.display = (i===idx) ? 'block' : 'none';
+  });
+  const api = getApiData(id);
+  api.response_examples.forEach((re, i) => {
+    const t = document.getElementById(`rtab_${id}_${i}`);
+    if (t) t.classList.toggle('active', i===idx);
+  });
+}
+
+async function tryItOut(id){
+  const api = getApiData(id);
+  const btn = document.getElementById('try_' + id);
+  const url = document.getElementById('url_' + id).value.trim();
+  const corsEl = document.getElementById('cors_' + id);
+  corsEl.style.display = 'none';
+
+  // Collect request headers (typed table).
+  const headers = {};
+  document.querySelectorAll('#api_' + id + ' .rh-input').forEach(inp => {
+    const name = inp.getAttribute('data-name');
+    if (inp.value.trim()) headers[name] = inp.value.trim();
+  });
+  // Custom headers.
+  document.querySelectorAll('#chbody_' + id + ' tr').forEach(tr => {
+    const k = tr.querySelector('.ch-key');
+    const v = tr.querySelector('.ch-val');
+    if (k && k.value.trim()) headers[k.value.trim()] = v ? v.value : '';
+  });
+
+  let body = null;
+  const bodyEl = document.getElementById('body_' + id);
+  if (bodyEl && bodyEl.value.trim()){
+    body = bodyEl.value;
+    if (!('Content-Type' in headers)) headers['Content-Type'] = 'application/json';
+  }
+
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="mini-spin"></span>Sending...';
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 65000);
+
+  try {
+    const r = await fetch('/api/proxy', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({url, method: api.method, headers, body}),
+      signal: controller.signal
+    });
+    clearTimeout(timer);
+    const d = await r.json();
+    showResponse(id, d);
+  } catch(e){
+    clearTimeout(timer);
+    if (e.name === 'AbortError'){
+      showResponse(id, {status:0, statusText:'Timeout', body:'Request timed out after 65s.', headers:{}, elapsed:65000});
+    } else {
+      corsEl.style.display = 'block';
+      showResponse(id, {status:0, statusText:'Network Error', body:String(e), headers:{}, elapsed:0});
+    }
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = orig;
+  }
+}
+
+function showResponse(id, d){
+  const box = document.getElementById('respbox_' + id);
+  box.style.display = 'block';
+  const pill = document.getElementById('status_' + id);
+  const status = d.status || 0;
+  pill.textContent = status + (d.statusText ? (' ' + d.statusText) : '');
+  let color = '#8a90a6';
+  if (status >= 200 && status < 300) color = 'var(--green)';
+  else if (status >= 400 && status < 500) color = 'var(--orange)';
+  else if (status >= 500 || status === 0) color = 'var(--danger)';
+  pill.style.color = color;
+
+  document.getElementById('time_' + id).textContent = (d.elapsed || 0) + ' ms';
+
+  let bodyText = d.body || '';
+  try { bodyText = JSON.stringify(JSON.parse(bodyText), null, 2); } catch(e){}
+  document.getElementById('respbody_' + id).textContent = bodyText;
+
+  let hdrText = '';
+  if (d.headers){ hdrText = Object.entries(d.headers).map(([k,v]) => `${k}: ${v}`).join('\n'); }
+  document.getElementById('respheaders_' + id).textContent = hdrText;
+}
+
+function openInNewTab(ci, ai){
+  window.open('/api-detail?c=' + ci + '&a=' + ai, '_blank');
+}
+
+async function generateReadme(id){
+  const api = getApiData(id);
+  const urlField = document.getElementById('url_' + id);
+  const readmeUrl = urlField ? urlField.value : '';
+
+  let liveTest = null;
+  const box = document.getElementById('respbox_' + id);
+  if (box && box.style.display !== 'none'){
+    const pathVars = [];
+    document.querySelectorAll(`.pv-input[data-id="${id}"]`).forEach(inp => pathVars.push({name: inp.getAttribute('data-name'), value: inp.value}));
+    const queryParams = [];
+    document.querySelectorAll(`.qp-input[data-id="${id}"]`).forEach(inp => queryParams.push({name: inp.getAttribute('data-name'), value: inp.value}));
+    const bodyEl = document.getElementById('body_' + id);
+    liveTest = {
+      url: readmeUrl,
+      method: api.method,
+      pathVars, queryParams,
+      body: bodyEl ? bodyEl.value : '',
+      status: document.getElementById('status_' + id).textContent,
+      time: document.getElementById('time_' + id).textContent,
+      respBody: document.getElementById('respbody_' + id).textContent,
+      respHeaders: document.getElementById('respheaders_' + id).textContent,
+    };
+  }
+
+  const r = await fetch('/api/generate-readme', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({api, live_test: liveTest, readme_url: readmeUrl})
+  });
+  const blob = await r.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (api.method_name || 'api') + '_README.html';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+function chAddRow(tbodyId){
+  const tbody = document.getElementById(tbodyId);
+  const tr = document.createElement('tr');
+  tr.innerHTML = `<td><input type="text" class="ch-key"></td><td><input type="text" class="ch-val"></td><td><button class="icon-btn" onclick="chRemRow(this)">−</button></td>`;
+  tbody.appendChild(tr);
+}
+
+function chRemRow(btn){
+  const tbody = btn.closest('tbody');
+  if (tbody.rows.length <= 1){
+    btn.closest('tr').querySelectorAll('input').forEach(i => i.value = '');
+  } else {
+    btn.closest('tr').remove();
+  }
+}
+
+async function exportPostman(){
+  const base = (cfg.urls && cfg.urls.LOCAL) ? cfg.urls.LOCAL : 'http://localhost:8080';
+  const lp = cfg.last_project || 'API Collection';
+  const name = lp.replace(/\\/g,'/').split('/').filter(Boolean).pop() || 'API Collection';
+  const r = await fetch('/api/export-postman', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({base_url: base, collection_name: name})
+  });
+  const d = await r.json();
+  const blob = new Blob([d.collection], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = d.collection_filename || 'collection.postman_collection.json';
+  document.body.appendChild(a); a.click(); a.remove();
+}
+
+let rescanTimer = null;
+async function rescan(){
+  const btn = document.getElementById('rescanBtn');
+  const lp = cfg.last_project || '';
+  if (!lp) return;
+  const orig = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span class="mini-spin"></span>Scanning...';
+  await fetch('/api/scan', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({folder: lp})});
+  if (rescanTimer) clearInterval(rescanTimer);
+  rescanTimer = setInterval(async () => {
+    const r = await fetch('/api/scan/progress');
+    const p = await r.json();
+    if (!p.scanning){
+      clearInterval(rescanTimer);
+      btn.disabled = false;
+      btn.innerHTML = orig;
+      await loadResults();
+    }
+  }, 400);
+}
+
+function doSearch(){
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  if (!q){ renderControllers(allControllers, []); return; }
+  const filtered = allControllers.map(ctrl => {
+    const apis = ctrl.apis.filter(api =>
+      (api.path||'').toLowerCase().includes(q) ||
+      (api.method||'').toLowerCase().includes(q) ||
+      (ctrl.name||'').toLowerCase().includes(q) ||
+      (api.method_name||'').toLowerCase().includes(q)
+    );
+    return {name: ctrl.name, apis};
+  }).filter(c => c.apis.length);
+  renderControllers(filtered, []);
+  document.querySelectorAll('.controller-group').forEach(g => g.classList.add('open'));
+}
+
+function onPortChange(){
+  const v = parseInt(document.getElementById('portInput').value, 10);
+  if (!isNaN(v) && v !== (cfg.port || 5000)){
+    pendingPort = v;
+    document.getElementById('restartBtn').style.display = 'inline-block';
+    document.getElementById('restartBanner').style.display = 'block';
+  } else {
+    pendingPort = null;
+    document.getElementById('restartBtn').style.display = 'none';
+    document.getElementById('restartBanner').style.display = 'none';
+  }
+}
+
+async function doRestart(){
+  const port = pendingPort || (cfg.port || 5000);
+  document.getElementById('restartBtn').style.display = 'inline-block';
+  document.getElementById('restartBanner').style.display = 'block';
+  document.getElementById('restartBanner').textContent = 'Restarting on port ' + port + '...';
+  try {
+    await fetch('/api/restart', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({port})});
+  } catch(e){}
+
+  const target = window.location.protocol + '//' + window.location.hostname + ':' + port + '/dashboard';
+  const poll = setInterval(async () => {
+    try {
+      const r = await fetch(window.location.protocol + '//' + window.location.hostname + ':' + port + '/api/config', {cache:'no-store'});
+      if (r.ok){ clearInterval(poll); window.location.href = target; }
+    } catch(e){ /* not up yet */ }
+  }, 600);
+}
+</script>
+</body>
+</html>

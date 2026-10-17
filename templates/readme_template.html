@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ api.method_name }}() — API Documentation</title>
+<style>
+  :root {
+    --bg:#0f1117; --card:#1e2130; --border:#2a2f45; --text:#e6e8ef; --muted:#8a90a6;
+    --accent1:#6366f1; --accent2:#8b5cf6; --amber:#fbbf24;
+    --green:#22c55e; --orange:#f59e0b; --danger:#ef4444;
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:"Segoe UI",system-ui,-apple-system,sans-serif; background:var(--bg); color:var(--text); }
+  .wrap { max-width:900px; margin:0 auto; padding:40px 24px 80px; }
+  h1 { font-size:30px; margin:0 0 6px;
+    background:linear-gradient(90deg,var(--accent1),var(--accent2)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+  .subtitle { color:var(--muted); font-size:14px; margin-bottom:30px; }
+  section { margin-bottom:28px; }
+  section > h2 { font-size:15px; text-transform:uppercase; letter-spacing:.6px; color:var(--muted); border-bottom:1px solid var(--border); padding-bottom:8px; margin:0 0 14px; }
+  .desc { font-size:14px; color:#c3c8db; line-height:1.6; }
+  .endpoint { display:flex; align-items:center; gap:12px; font-family:"Consolas",monospace; font-size:16px; background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px 16px; }
+  .endpoint .pv { color:var(--amber); }
+  .method-badge { font-size:12px; font-weight:700; padding:5px 11px; border-radius:6px; }
+  .m-GET { background:#0d3321; color:#4ade80; }
+  .m-POST { background:#1e2f4a; color:#60a5fa; }
+  .m-PUT { background:#3a2a1e; color:#fbbf24; }
+  .m-DELETE { background:#3a1e1e; color:#f87171; }
+  .m-PATCH { background:#2d1e4a; color:#c4b5fd; }
+  .info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .info-item { background:var(--card); border:1px solid var(--border); border-radius:8px; padding:12px 14px; }
+  .info-item.full { grid-column:1 / -1; }
+  .info-item .k { font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--muted); margin-bottom:4px; }
+  .info-item .v { font-size:14px; font-family:"Consolas",monospace; word-break:break-all; }
+  table.tbl { width:100%; border-collapse:collapse; font-size:13px; background:var(--card); border:1px solid var(--border); border-radius:8px; overflow:hidden; }
+  table.tbl th { text-align:left; color:var(--muted); font-weight:600; font-size:11px; padding:9px 12px; border-bottom:1px solid var(--border); background:#171a27; }
+  table.tbl td { padding:9px 12px; border-bottom:1px solid var(--border); font-family:"Consolas",monospace; }
+  table.tbl tr:last-child td { border-bottom:none; }
+  .status-pill { font-weight:700; padding:3px 9px; border-radius:6px; }
+  .tabs { display:flex; gap:6px; margin-bottom:10px; flex-wrap:wrap; }
+  .tab { padding:6px 12px; font-size:12px; border-radius:6px; background:var(--card); border:1px solid var(--border); cursor:pointer; color:var(--muted); }
+  .tab.active { color:var(--text); border-color:var(--accent1); }
+  .code-wrap { border:1px solid var(--border); border-radius:8px; overflow:hidden; margin-bottom:14px; }
+  .code-bar { display:flex; align-items:center; justify-content:space-between; background:#171a27; padding:7px 12px; font-size:12px; color:var(--muted); }
+  .copy-btn { background:#262a3d; border:1px solid var(--border); color:var(--text); border-radius:6px; padding:4px 10px; cursor:pointer; font-size:12px; }
+  .copy-btn:hover { border-color:var(--accent1); }
+  pre.code { background:#0c0e15; padding:14px; overflow:auto; font-family:"Consolas",monospace; font-size:12.5px; margin:0; color:#c3e88d; white-space:pre-wrap; word-break:break-word; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>{{ api.method_name }}()</h1>
+  <div class="subtitle">Auto-generated API documentation — {{ api.controller }}</div>
+
+  {% if api.description %}
+  <section>
+    <h2>Description</h2>
+    <div class="desc">{{ api.description }}</div>
+  </section>
+  {% endif %}
+
+  <section>
+    <h2>Endpoint</h2>
+    <div class="endpoint">
+      <span class="method-badge m-{{ api.method }}">{{ api.method }}</span>
+      <span id="endpointPath">{{ api.path }}</span>
+    </div>
+  </section>
+
+  <section>
+    <h2>Details</h2>
+    <div class="info-grid">
+      <div class="info-item"><div class="k">Controller</div><div class="v">{{ api.controller }}</div></div>
+      <div class="info-item"><div class="k">Method</div><div class="v">{{ api.method_name }}()</div></div>
+      {% if api.request_body_type %}
+      <div class="info-item"><div class="k">Request Body Type</div><div class="v">{{ api.request_body_type }}</div></div>
+      {% endif %}
+      <div class="info-item"><div class="k">HTTP Method</div><div class="v">{{ api.method }}</div></div>
+    </div>
+  </section>
+
+  {% if api.request_headers and api.request_headers|length > 0 %}
+  <section>
+    <h2>Request Headers</h2>
+    <table class="tbl">
+      <thead><tr><th>Name</th><th>Type</th></tr></thead>
+      <tbody>
+        {% for h in api.request_headers %}
+        <tr><td>{{ h.name }}</td><td>{{ h.type }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+  {% endif %}
+
+  {% if live_test %}
+  <section>
+    <h2>Request</h2>
+    <div class="info-grid">
+      <div class="info-item full"><div class="k">URL</div><div class="v">{{ live_test.url }}</div></div>
+    </div>
+    {% if live_test.pathVars and live_test.pathVars|length > 0 %}
+    <table class="tbl" style="margin-top:12px;">
+      <thead><tr><th>Path Variable</th><th>Value</th></tr></thead>
+      <tbody>
+        {% for pv in live_test.pathVars %}
+        <tr><td>{{ pv.name }}</td><td>{{ pv.value }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% if live_test.queryParams and live_test.queryParams|length > 0 %}
+    <table class="tbl" style="margin-top:12px;">
+      <thead><tr><th>Query Param</th><th>Value</th></tr></thead>
+      <tbody>
+        {% for qp in live_test.queryParams %}
+        <tr><td>{{ qp.name }}</td><td>{{ qp.value }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% if live_test.body %}
+    <div class="code-wrap" style="margin-top:12px;">
+      <div class="code-bar"><span>json — request body</span><button class="copy-btn" onclick="copyCode('ltReqBody')">Copy</button></div>
+      <pre class="code" id="ltReqBody">{{ live_test.body }}</pre>
+    </div>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Response</h2>
+    <div class="info-grid">
+      <div class="info-item"><div class="k">Status</div><div class="v"><span class="status-pill" id="ltStatus">{{ live_test.status }}</span></div></div>
+      <div class="info-item"><div class="k">Time</div><div class="v">{{ live_test.time }}</div></div>
+    </div>
+    <div class="code-wrap" style="margin-top:12px;">
+      <div class="code-bar"><span>response body</span><button class="copy-btn" onclick="copyCode('ltRespBody')">Copy</button></div>
+      <pre class="code" id="ltRespBody">{{ live_test.respBody }}</pre>
+    </div>
+    {% if live_test.respHeaders %}
+    <div class="code-wrap">
+      <div class="code-bar"><span>response headers</span><button class="copy-btn" onclick="copyCode('ltRespHeaders')">Copy</button></div>
+      <pre class="code" id="ltRespHeaders">{{ live_test.respHeaders }}</pre>
+    </div>
+    {% endif %}
+  </section>
+  {% else %}
+  <section>
+    <h2>Request</h2>
+    <div class="info-grid">
+      <div class="info-item full"><div class="k">URL</div><div class="v">{{ readme_url or (urls.LOCAL ~ api.path) }}</div></div>
+    </div>
+    {% if api.path_vars and api.path_vars|length > 0 %}
+    <table class="tbl" style="margin-top:12px;">
+      <thead><tr><th>Path Variable</th><th>Type</th></tr></thead>
+      <tbody>
+        {% for pv in api.path_vars %}
+        <tr><td>{{ pv.name }}</td><td>{{ pv.type }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% if api.query_params and api.query_params|length > 0 %}
+    <table class="tbl" style="margin-top:12px;">
+      <thead><tr><th>Query Param</th><th>Type</th></tr></thead>
+      <tbody>
+        {% for qp in api.query_params %}
+        <tr><td>{{ qp.name }}</td><td>{{ qp.type }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+    {% if api.request_example %}
+    <div class="code-wrap" style="margin-top:12px;">
+      <div class="code-bar"><span>json — request example</span><button class="copy-btn" onclick="copyCode('reqExample')">Copy</button></div>
+      <pre class="code" id="reqExample">{{ api.request_example }}</pre>
+    </div>
+    {% endif %}
+  </section>
+
+  <section>
+    <h2>Response</h2>
+    {% if api.response_examples and api.response_examples|length > 0 %}
+      {% if api.response_examples|length > 1 %}
+      <div class="tabs">
+        {% for re in api.response_examples %}
+        <div class="tab {% if loop.index0 == 0 %}active{% endif %}" id="rtab_{{ loop.index0 }}" onclick="switchResp({{ loop.index0 }}, this)">{{ re.label }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% for re in api.response_examples %}
+      <div class="code-wrap respcode" id="rcode_{{ loop.index0 }}" style="{% if loop.index0 != 0 %}display:none{% endif %}">
+        <div class="code-bar"><span>json — {{ re.label }}</span><button class="copy-btn" onclick="copyCode('rcodepre_{{ loop.index0 }}')">Copy</button></div>
+        <pre class="code" id="rcodepre_{{ loop.index0 }}">{{ re.example }}</pre>
+      </div>
+      {% endfor %}
+    {% endif %}
+  </section>
+  {% endif %}
+
+  <section>
+    <h2>cURL Example</h2>
+    <div class="code-wrap">
+      <div class="code-bar"><span>bash</span><button class="copy-btn" onclick="copyCode('curlCode')">Copy</button></div>
+      <pre class="code" id="curlCode"></pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>RestTemplate (Java) Example</h2>
+    <div class="code-wrap">
+      <div class="code-bar"><span>java</span><button class="copy-btn" onclick="copyCode('javaCode')">Copy</button></div>
+      <pre class="code" id="javaCode"></pre>
+    </div>
+  </section>
+</div>
+
+{# ---- Build cURL + Java examples in Jinja ---- #}
+{% set effective_url = (live_test.url if live_test else (readme_url or (urls.LOCAL ~ api.path))) %}
+{% set has_body = (live_test.body if live_test else api.request_example) %}
+
+<script type="application/json" id="examplesData">
+{
+  "method": {{ api.method | tojson }},
+  "url": {{ effective_url | tojson }},
+  "hasBody": {{ (has_body is not none and has_body != "") | tojson }},
+  "body": {{ (has_body if has_body else "") | tojson }}
+}
+</script>
+
+<script>
+function copyCode(id){
+  const el = document.getElementById(id);
+  if (!el) return;
+  const text = el.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.target;
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+}
+
+function switchResp(idx, btn){
+  document.querySelectorAll('.respcode').forEach((el, i) => { el.style.display = (i===idx) ? 'block' : 'none'; });
+  document.querySelectorAll('.tabs .tab').forEach(t => t.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+}
+
+// Highlight {vars} in the endpoint path.
+(function(){
+  const el = document.getElementById('endpointPath');
+  if (el){ el.innerHTML = el.textContent.replace(/\{([^}]+)\}/g, '<span class="pv">{$1}</span>'); }
+})();
+
+// Build cURL and Java examples client-side from injected data.
+(function(){
+  const data = JSON.parse(document.getElementById('examplesData').textContent);
+  const method = data.method || 'GET';
+  const url = data.url || '';
+  const hasBody = data.hasBody;
+  const body = data.body || '';
+
+  // cURL
+  let curl = `curl -X ${method} "${url}"`;
+  if (hasBody){
+    curl += ` \\\n  -H "Content-Type: application/json" \\\n  -d '${body.replace(/'/g, "'\\''")}'`;
+  }
+  const curlEl = document.getElementById('curlCode');
+  if (curlEl) curlEl.textContent = curl;
+
+  // Java RestTemplate
+  let java = 'RestTemplate restTemplate = new RestTemplate();\n';
+  java += `String url = "${url}";\n`;
+  if (method === 'GET'){
+    java += 'ResponseEntity<String> response = restTemplate.getForEntity(url, String.class);\n';
+    java += 'System.out.println(response.getBody());';
+  } else if (method === 'POST'){
+    java += 'HttpHeaders headers = new HttpHeaders();\n';
+    java += 'headers.setContentType(MediaType.APPLICATION_JSON);\n';
+    if (hasBody){
+      java += 'String requestBody = ' + JSON.stringify(body) + ';\n';
+      java += 'HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);\n';
+    } else {
+      java += 'HttpEntity<String> entity = new HttpEntity<>(headers);\n';
+    }
+    java += 'ResponseEntity<String> response = restTemplate.postForEntity(url, entity, String.class);\n';
+    java += 'System.out.println(response.getBody());';
+  } else {
+    // PUT / DELETE / PATCH / other
+    java += 'HttpHeaders headers = new HttpHeaders();\n';
+    java += 'headers.setContentType(MediaType.APPLICATION_JSON);\n';
+    if (hasBody){
+      java += 'String requestBody = ' + JSON.stringify(body) + ';\n';
+      java += 'HttpEntity<String> entity = new HttpEntity<>(requestBody, headers);\n';
+    } else {
+      java += 'HttpEntity<String> entity = new HttpEntity<>(headers);\n';
+    }
+    java += `ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.${method}, entity, String.class);\n`;
+    java += 'System.out.println(response.getBody());';
+  }
+  const javaEl = document.getElementById('javaCode');
+  if (javaEl) javaEl.textContent = java;
+
+  // Color the live-test status pill if present.
+  const pill = document.getElementById('ltStatus');
+  if (pill){
+    const m = pill.textContent.match(/\d+/);
+    const code = m ? parseInt(m[0],10) : 0;
+    let color = '#8a90a6';
+    if (code>=200 && code<300) color = '#22c55e';
+    else if (code>=400 && code<500) color = '#f59e0b';
+    else if (code>=500) color = '#ef4444';
+    pill.style.color = color;
+  }
+})();
+</script>
+</body>
+</html>
